@@ -7,9 +7,10 @@ import (
 )
 
 type Element struct {
-	key       string
-	value     any
-	expiresAt time.Time
+	key           string
+	value         any
+	expQueueIndex int // -1 if element has no TTL
+	expiresAt     time.Time
 }
 
 type Cache struct {
@@ -52,7 +53,11 @@ func (c *Cache) Add(key string, value any) {
 
 	// if element already exists just update element position in queue
 	if elem, ok := c.data[key]; ok {
-		elem.Value = Element{key: key, value: value}
+		elem.Value = Element{
+			key:           key,
+			value:         value,
+			expQueueIndex: -1,
+		}
 		c.queue.MoveToFront(elem)
 		return
 	}
@@ -66,18 +71,23 @@ func (c *Cache) Add(key string, value any) {
 
 	// add new element
 	newElem := c.queue.PushFront(Element{
-		key:   key,
-		value: value,
+		key:           key,
+		value:         value,
+		expQueueIndex: -1,
 	})
 	c.data[key] = newElem
 }
 
 func (c *Cache) Get(key string) (any, bool) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
+	c.mutex.RLock()
+	elem, ok := c.data[key]
+	c.mutex.RUnlock()
 
-	// get value and update position in queue
-	if elem, ok := c.data[key]; ok {
+	// update position in queue if element exists
+	if ok {
+		c.mutex.Lock()
+		defer c.mutex.Unlock()
+
 		c.queue.MoveToFront(elem)
 		return elem.Value.(Element).value, true
 	}
