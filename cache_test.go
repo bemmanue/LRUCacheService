@@ -3,10 +3,31 @@ package lrucache
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"strconv"
 	"testing"
 )
 
-func Test_New(t *testing.T) {
+func BenchmarkCache_Add(b *testing.B) {
+	cache := New(1000)
+
+	for i := 0; i < b.N; i++ {
+		cache.Add(strconv.Itoa(i), i)
+	}
+}
+
+func BenchmarkCache_Get(b *testing.B) {
+	cache := New(1000)
+
+	for i := 0; i < 1000; i++ {
+		cache.Add(strconv.Itoa(i), i)
+	}
+
+	for i := 0; i < b.N; i++ {
+		cache.Get(strconv.Itoa(i))
+	}
+}
+
+func Test_Cache_New(t *testing.T) {
 	capacity := 5
 	cache := New(capacity)
 
@@ -21,6 +42,50 @@ func Test_Cache_Cap(t *testing.T) {
 	cache := New(capacity)
 
 	assert.Equal(t, capacity, cache.Cap())
+}
+
+func Test_Cache_Len(t *testing.T) {
+	capacity := 3
+	cache := New(capacity)
+
+	cases := []struct {
+		name        string
+		key         string
+		value       any
+		expectedLen int
+	}{
+		{
+			name:        "free space",
+			key:         "first",
+			value:       1,
+			expectedLen: 1,
+		},
+		{
+			name:        "free space",
+			key:         "second",
+			value:       2,
+			expectedLen: 2,
+		},
+		{
+			name:        "free space",
+			key:         "third",
+			value:       3,
+			expectedLen: 3,
+		},
+		{
+			name:        "no free space",
+			key:         "forth",
+			value:       4,
+			expectedLen: 3,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			cache.Add(c.key, c.value)
+			assert.Equal(t, c.expectedLen, cache.Len())
+		})
+	}
 }
 
 func Test_Cache_Add(t *testing.T) {
