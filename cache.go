@@ -1,4 +1,4 @@
-package CacheService
+package lrucache
 
 import (
 	"container/list"
