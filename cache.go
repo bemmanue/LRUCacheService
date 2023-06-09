@@ -54,9 +54,8 @@ func (c *Cache) Add(key string, value any) {
 	// if element already exists just update element position in queue
 	if elem, ok := c.data[key]; ok {
 		elem.Value = Element{
-			key:           key,
-			value:         value,
-			expQueueIndex: -1,
+			key:   key,
+			value: value,
 		}
 		c.queue.MoveToFront(elem)
 		return
@@ -71,9 +70,8 @@ func (c *Cache) Add(key string, value any) {
 
 	// add new element
 	newElem := c.queue.PushFront(Element{
-		key:           key,
-		value:         value,
-		expQueueIndex: -1,
+		key:   key,
+		value: value,
 	})
 	c.data[key] = newElem
 }
