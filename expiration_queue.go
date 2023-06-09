@@ -18,7 +18,7 @@ func (q expirationQueue) Len() int {
 }
 
 func (q expirationQueue) Less(i, j int) bool {
-	return q[i].Value.(Element).expiresAt.Before(q[j].Value.(Element).expiresAt)
+	return q[i].Value.(*Element).expiresAt.Before(q[j].Value.(*Element).expiresAt)
 }
 
 func (q expirationQueue) Swap(i, j int) {
