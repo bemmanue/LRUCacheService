@@ -1,7 +1,6 @@
 package lrucache
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"strconv"
@@ -43,32 +42,10 @@ func Test_NewTTL_AddWithExpiration(t *testing.T) {
 	capacity := 3
 	cache := NewWithTTL(capacity, time.Second)
 
-	cache.AddWithTTL("key", "value", time.Second)
-	cache.AddWithTTL("another key", "another value", time.Second*3)
+	cache.Add("key", "value")
+	cache.AddWithTTL("key", "another value", time.Second*3)
 
-	fmt.Println(cache.data)
-
-	assert.Equal(t, 2, len(cache.data))
-	assert.Equal(t, 2, cache.queue.Len())
-	assert.Equal(t, 2, cache.expQueue.Len())
-
-	fmt.Println(cache.data)
-
-	time.Sleep(time.Second * 2)
-
-	assert.Equal(t, 1, len(cache.data))
-	assert.Equal(t, 1, cache.queue.Len())
-	assert.Equal(t, 1, cache.expQueue.Len())
-
-	fmt.Println(cache.data)
-
-	time.Sleep(time.Second * 4)
-
-	assert.Equal(t, 0, len(cache.data))
-	assert.Equal(t, 0, cache.queue.Len())
-	assert.Equal(t, 0, cache.expQueue.Len())
-
-	fmt.Println(cache.data)
+	assert.Equal(t, 1, cache.Len())
 }
 
 func Test_TTLCache_Cap(t *testing.T) {

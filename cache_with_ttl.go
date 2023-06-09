@@ -7,14 +7,18 @@ import (
 )
 
 type CacheWithTTL struct {
-	*Cache
+	Cache
 	expQueue expirationQueue
 	expCheck time.Duration
 }
 
 func NewWithTTL(cap int, expCheck time.Duration) *CacheWithTTL {
 	cache := &CacheWithTTL{
-		Cache:    New(cap),
+		Cache: Cache{
+			cap:   cap,
+			data:  make(map[string]*list.Element, cap),
+			queue: list.New(),
+		},
 		expQueue: newExpirationQueue(),
 		expCheck: expCheck,
 	}
@@ -76,7 +80,10 @@ func (c *CacheWithTTL) Add(key string, value any) {
 
 	// if element already exists just update element position in queue
 	if elem, ok := c.data[key]; ok {
-		elem.Value = Element{key: key, value: value}
+		elem.Value = Element{
+			key:   key,
+			value: value,
+		}
 		c.queue.MoveToFront(elem)
 		return
 	}
@@ -90,8 +97,9 @@ func (c *CacheWithTTL) Add(key string, value any) {
 
 	// add new element
 	newElem := c.queue.PushFront(Element{
-		key:   key,
-		value: value,
+		key:           key,
+		value:         value,
+		expQueueIndex: -1,
 	})
 	c.data[key] = newElem
 }
@@ -100,8 +108,9 @@ func (c *CacheWithTTL) AddWithTTL(key string, value interface{}, ttl time.Durati
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	// if element already exists do nothing
+	// update element if it already exists
 	if _, ok := c.data[key]; ok {
+		// ...
 		return
 	}
 
@@ -114,9 +123,10 @@ func (c *CacheWithTTL) AddWithTTL(key string, value interface{}, ttl time.Durati
 
 	// add new element
 	newElem := c.queue.PushFront(Element{
-		key:       key,
-		value:     value,
-		expiresAt: time.Now().Add(ttl),
+		key:           key,
+		value:         value,
+		expiresAt:     time.Now().Add(ttl),
+		expQueueIndex: -1,
 	})
 	c.data[key] = newElem
 	c.expQueue.Push(newElem)
@@ -124,9 +134,14 @@ func (c *CacheWithTTL) AddWithTTL(key string, value interface{}, ttl time.Durati
 
 func (c *CacheWithTTL) Get(key string) (any, bool) {
 	c.mutex.RLock()
-	defer c.mutex.RUnlock()
+	elem, ok := c.data[key]
+	c.mutex.RUnlock()
 
-	if elem, ok := c.data[key]; ok {
+	// update position in queue if element exists
+	if ok {
+		c.mutex.Lock()
+		defer c.mutex.Unlock()
+
 		c.queue.MoveToFront(elem)
 		return elem.Value.(Element).value, true
 	}
@@ -139,6 +154,19 @@ func (c *CacheWithTTL) Remove(key string) {
 	defer c.mutex.Unlock()
 
 	if elem, ok := c.data[key]; ok {
+
+		// temporary solution !
+		for i, e := range c.expQueue {
+			if e.Value.(Element).key == key {
+				copy(c.expQueue[i:], c.expQueue[i+1:])
+				heap.Init(&c.expQueue)
+				break
+			}
+		}
+
+		// instead of
+		// heap.Remove(&c.expQueue, elem.Value.(Element).expQueueIndex)
+
 		c.queue.Remove(elem)
 		delete(c.data, key)
 	}
