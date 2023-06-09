@@ -42,8 +42,8 @@ func (c *CacheWithTTL) GC() {
 		for c.expQueue.Len() > 0 {
 			last := c.expQueue[0]
 
-			if last.Value.(Element).expiresAt.Before(time.Now()) {
-				delete(c.data, last.Value.(Element).key)
+			if last.Value.(*Element).expiresAt.Before(time.Now()) {
+				delete(c.data, last.Value.(*Element).key)
 				c.queue.Remove(last)
 				heap.Pop(&c.expQueue)
 			} else {

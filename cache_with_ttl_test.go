@@ -39,13 +39,23 @@ func Test_NewTTL(t *testing.T) {
 }
 
 func Test_NewTTL_AddWithExpiration(t *testing.T) {
-	capacity := 3
+	capacity := 4
 	cache := NewWithTTL(capacity, time.Second)
 
-	cache.Add("key", "value")
-	cache.AddWithTTL("key", "another value", time.Second*3)
+	cache.Add("first", "value")
+	cache.AddWithTTL("first", "another value", time.Second*3)
+	cache.AddWithTTL("second", "another value", time.Second*3)
+	cache.AddWithTTL("third", "another value", time.Second*3)
 
-	assert.Equal(t, 1, cache.Len())
+	assert.Equal(t, 3, cache.Len())
+	assert.Equal(t, 3, cache.queue.Len())
+	assert.Equal(t, 3, cache.expQueue.Len())
+	
+	time.Sleep(time.Second * 4)
+
+	assert.Equal(t, 0, cache.Len())
+	assert.Equal(t, 0, cache.queue.Len())
+	assert.Equal(t, 0, cache.expQueue.Len())
 }
 
 func Test_TTLCache_Cap(t *testing.T) {
