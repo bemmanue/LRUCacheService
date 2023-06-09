@@ -3,11 +3,13 @@ package lrucache
 import (
 	"container/list"
 	"sync"
+	"time"
 )
 
 type Element struct {
-	key   string
-	value any
+	key       string
+	value     any
+	expiresAt time.Time
 }
 
 type Cache struct {
@@ -27,6 +29,13 @@ func New(cap int) *Cache {
 
 func (c *Cache) Cap() int {
 	return c.cap
+}
+
+func (c *Cache) Len() int {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+
+	return len(c.data)
 }
 
 func (c *Cache) Clear() {
