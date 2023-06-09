@@ -23,15 +23,13 @@ func (q expirationQueue) Less(i, j int) bool {
 
 func (q expirationQueue) Swap(i, j int) {
 	q[i], q[j] = q[j], q[i]
-	// causes panic
-	//q[i].Value.(*Element).expQueueIndex = i
-	//q[j].Value.(*Element).expQueueIndex = j
+	q[i].Value.(*Element).expQueueIndex = i
+	q[j].Value.(*Element).expQueueIndex = j
 }
 
 func (q *expirationQueue) Push(x any) {
-	// causes panic
-	//elem := x.(*list.Element)
-	//elem.Value.(*Element).expQueueIndex = len(*q)
+	elem := x.(*list.Element)
+	elem.Value.(*Element).expQueueIndex = len(*q)
 	*q = append(*q, x.(*list.Element))
 }
 
@@ -39,8 +37,7 @@ func (q *expirationQueue) Pop() any {
 	old := *q
 	n := len(old)
 	x := old[n-1]
-	// causes panic
-	//x.Value.(*Element).expQueueIndex = -1
+	x.Value.(*Element).expQueueIndex = -1
 	*q = old[0 : n-1]
 	return x
 }
