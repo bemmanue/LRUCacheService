@@ -1,4 +1,4 @@
-module CacheService
+module github.com/bemmanue/LRUCacheService
 
 go 1.20
 
