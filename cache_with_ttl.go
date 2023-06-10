@@ -72,6 +72,7 @@ func (c *CacheWithTTL) Clear() {
 
 	c.data = make(map[string]*list.Element, c.cap)
 	c.queue = list.New()
+	c.expQueue = newExpirationQueue()
 }
 
 func (c *CacheWithTTL) Add(key string, value any) {
