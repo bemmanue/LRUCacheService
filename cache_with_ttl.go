@@ -3,6 +3,8 @@ package lrucache
 import (
 	"container/heap"
 	"container/list"
+	"context"
+	"fmt"
 	"time"
 )
 
@@ -12,7 +14,7 @@ type CacheWithTTL struct {
 	expCheck time.Duration
 }
 
-func NewWithTTL(cap int, expCheck time.Duration) *CacheWithTTL {
+func NewWithTTL(cap int, expCheck time.Duration) (*CacheWithTTL, context.CancelFunc) {
 	cache := &CacheWithTTL{
 		Cache: Cache{
 			cap:   cap,
@@ -23,35 +25,42 @@ func NewWithTTL(cap int, expCheck time.Duration) *CacheWithTTL {
 		expCheck: expCheck,
 	}
 
-	go cache.GC()
+	ctx, cancel := context.WithCancel(context.Background())
+	go cache.StartGC(ctx)
 
-	return cache
+	return cache, cancel
 }
 
-func (c *CacheWithTTL) GC() {
+func (c *CacheWithTTL) StartGC(ctx context.Context) {
 	for {
-		<-time.After(c.expCheck)
+		select {
+		case <-ctx.Done():
+			fmt.Println("CANCEL")
+			return
+		default:
+			<-time.After(c.expCheck)
 
-		if c.expQueue.Len() == 0 {
-			continue
-		}
-
-		c.mutex.Lock()
-
-		// check and remove expired elements
-		for c.expQueue.Len() > 0 {
-			last := c.expQueue[0]
-
-			if last.Value.(*Element).expiresAt.Before(time.Now()) {
-				delete(c.data, last.Value.(*Element).key)
-				c.queue.Remove(last)
-				heap.Pop(&c.expQueue)
-			} else {
+			if c.expQueue.Len() == 0 {
 				break
 			}
-		}
 
-		c.mutex.Unlock()
+			c.mutex.Lock()
+
+			// check and remove expired elements
+			for c.expQueue.Len() > 0 {
+				last := c.expQueue[0]
+
+				if last.Value.(*Element).expiresAt.Before(time.Now()) {
+					delete(c.data, last.Value.(*Element).key)
+					c.queue.Remove(last)
+					heap.Pop(&c.expQueue)
+				} else {
+					break
+				}
+			}
+
+			c.mutex.Unlock()
+		}
 	}
 }
 
