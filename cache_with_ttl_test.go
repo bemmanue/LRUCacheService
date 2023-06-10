@@ -9,7 +9,8 @@ import (
 )
 
 func BenchmarkCacheTTL_Add(b *testing.B) {
-	cache := NewWithTTL(1000, time.Second)
+	cache, cancel := NewWithTTL(1000, time.Second)
+	defer cancel()
 
 	for i := 0; i < b.N; i++ {
 		cache.Add(strconv.Itoa(i), i)
@@ -17,7 +18,8 @@ func BenchmarkCacheTTL_Add(b *testing.B) {
 }
 
 func BenchmarkCacheTTL_Get(b *testing.B) {
-	cache := NewWithTTL(1000, time.Second)
+	cache, cancel := NewWithTTL(1000, time.Second)
+	defer cancel()
 
 	for i := 0; i < 1000; i++ {
 		cache.Add(strconv.Itoa(i), i)
@@ -30,7 +32,8 @@ func BenchmarkCacheTTL_Get(b *testing.B) {
 
 func Test_NewTTL(t *testing.T) {
 	capacity := 5
-	cache := NewWithTTL(capacity, time.Second)
+	cache, cancel := NewWithTTL(capacity, time.Second)
+	defer cancel()
 
 	require.NotNil(t, cache)
 	assert.NotNil(t, cache.data)
@@ -40,7 +43,8 @@ func Test_NewTTL(t *testing.T) {
 
 func Test_NewTTL_AddWithExpiration(t *testing.T) {
 	capacity := 4
-	cache := NewWithTTL(capacity, time.Second)
+	cache, cancel := NewWithTTL(capacity, time.Second)
+	defer cancel()
 
 	cache.Add("first", "value")
 	cache.AddWithTTL("first", "another value", time.Second*3)
@@ -61,14 +65,16 @@ func Test_NewTTL_AddWithExpiration(t *testing.T) {
 
 func Test_CacheTTL_Cap(t *testing.T) {
 	capacity := 5
-	cache := NewWithTTL(capacity, time.Second)
+	cache, cancel := NewWithTTL(capacity, time.Second)
+	defer cancel()
 
 	assert.Equal(t, capacity, cache.Cap())
 }
 
 func Test_CacheTTL_Len(t *testing.T) {
 	capacity := 3
-	cache := NewWithTTL(capacity, time.Second)
+	cache, cancel := NewWithTTL(capacity, time.Second)
+	defer cancel()
 
 	cases := []struct {
 		name        string
@@ -111,7 +117,8 @@ func Test_CacheTTL_Len(t *testing.T) {
 }
 
 func Test_CacheTTL_Add(t *testing.T) {
-	cache := NewWithTTL(3, time.Second)
+	cache, cancel := NewWithTTL(3, time.Second)
+	defer cancel()
 
 	cases := []struct {
 		name        string
@@ -155,7 +162,8 @@ func Test_CacheTTL_Add(t *testing.T) {
 }
 
 func Test_CacheTTL_Update(t *testing.T) {
-	cache := NewWithTTL(3, time.Second)
+	cache, cancel := NewWithTTL(3, time.Second)
+	defer cancel()
 
 	cache.Add("key", "value")
 	cache.Add("key", "another value")
@@ -170,7 +178,8 @@ func Test_CacheTTL_Update(t *testing.T) {
 
 func Test_CacheTTL_Clear(t *testing.T) {
 	capacity := 5
-	cache := NewWithTTL(capacity, time.Second)
+	cache, cancel := NewWithTTL(capacity, time.Second)
+	defer cancel()
 
 	cache.Add("key", "value")
 
@@ -185,7 +194,8 @@ func Test_CacheTTL_Clear(t *testing.T) {
 
 func Test_CacheTTL_Get(t *testing.T) {
 	capacity := 3
-	cache := NewWithTTL(capacity, time.Second)
+	cache, cancel := NewWithTTL(capacity, time.Second)
+	defer cancel()
 
 	cache.Add("first", 1)
 	cache.Add("second", struct{ n int }{2})
@@ -242,7 +252,8 @@ func Test_CacheTTL_Get(t *testing.T) {
 
 func Test_CacheTTL_Remove(t *testing.T) {
 	capacity := 3
-	cache := NewWithTTL(capacity, time.Second)
+	cache, cancel := NewWithTTL(capacity, time.Second)
+	defer cancel()
 
 	cache.Add("first", 1)
 	cache.Add("second", 2)
