@@ -59,14 +59,14 @@ func Test_NewTTL_AddWithExpiration(t *testing.T) {
 	assert.Equal(t, 1, cache.expQueue.Len())
 }
 
-func Test_TTLCache_Cap(t *testing.T) {
+func Test_CacheTTL_Cap(t *testing.T) {
 	capacity := 5
 	cache := NewWithTTL(capacity, time.Second)
 
 	assert.Equal(t, capacity, cache.Cap())
 }
 
-func Test_TTLCache_Len(t *testing.T) {
+func Test_CacheTTL_Len(t *testing.T) {
 	capacity := 3
 	cache := NewWithTTL(capacity, time.Second)
 
@@ -110,7 +110,7 @@ func Test_TTLCache_Len(t *testing.T) {
 	}
 }
 
-func Test_TTLCache_Add(t *testing.T) {
+func Test_CacheTTL_Add(t *testing.T) {
 	cache := NewWithTTL(3, time.Second)
 
 	cases := []struct {
@@ -154,7 +154,7 @@ func Test_TTLCache_Add(t *testing.T) {
 	}
 }
 
-func Test_TTLCache_Update(t *testing.T) {
+func Test_CacheTTL_Update(t *testing.T) {
 	cache := NewWithTTL(3, time.Second)
 
 	cache.Add("key", "value")
@@ -168,7 +168,7 @@ func Test_TTLCache_Update(t *testing.T) {
 	assert.Equal(t, 1, cache.queue.Len())
 }
 
-func Test_TTLCache_Clear(t *testing.T) {
+func Test_CacheTTL_Clear(t *testing.T) {
 	capacity := 5
 	cache := NewWithTTL(capacity, time.Second)
 
@@ -180,9 +180,10 @@ func Test_TTLCache_Clear(t *testing.T) {
 	assert.NotNil(t, cache.queue)
 	assert.Equal(t, 0, len(cache.data))
 	assert.Equal(t, 0, cache.queue.Len())
+	assert.Equal(t, 0, cache.expQueue.Len())
 }
 
-func Test_TTLCache_Get(t *testing.T) {
+func Test_CacheTTL_Get(t *testing.T) {
 	capacity := 3
 	cache := NewWithTTL(capacity, time.Second)
 
@@ -239,7 +240,7 @@ func Test_TTLCache_Get(t *testing.T) {
 	}
 }
 
-func Test_TTLCache_Remove(t *testing.T) {
+func Test_CacheTTL_Remove(t *testing.T) {
 	capacity := 3
 	cache := NewWithTTL(capacity, time.Second)
 
